@@ -38,8 +38,12 @@ class Dynamixel {
 		int getReadAX12TemperatureCommand(byte id);
 
 
+		int getSetAX12SpeedCommand(byte id, short goal);
+		int getReadAX12CurrentSpeedCommand(byte id);
 
-		
+		int getSetAX12TorqueCommand(byte id, short goal);
+		int getReadAX12TorqueCommand(byte id);
+
 		int getSetAX12PositionCommand(byte id, short goal);
 		int getReadAX12PositionCommand(byte id);
 
@@ -53,12 +57,19 @@ class Dynamixel {
 		~Dynamixel();
 
 		int getPosition(SerialPort *serialPort, int idAX12);
-		int setPosition(SerialPort *serialPort, int idAX12, int position);	
+		int setPosition(SerialPort *serialPort, int idAX12, int position);
 
-		int getLoad(SerialPort *serialPort, int idAX12);	
-		
+		int getTorque(SerialPort *serialPort, int idAX12);
+		int setTorque(SerialPort *serialPort, int idAX12, int position);
+
+		int getCurrentSpeed(SerialPort *serialPort, int idAX12);
+		int setSpeed(SerialPort *serialPort, int idAX12, int position);
+
+
+		int getLoad(SerialPort *serialPort, int idAX12);
+
 		int sendTossModeCommand(SerialPort *serialPort);
-		
+
 		void bf (byte *buffer, int n);
 };
 

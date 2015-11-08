@@ -27,6 +27,8 @@ int main() {
 
 	if (serialPort.connect("/dev/ttyUSB0")!=0) {
 		//keep trying to sendTossModeCommand till pos value is right.
+
+
 		do{
 		   tossCode =  dynamixel.sendTossModeCommand(&serialPort);
 			printf("\n tossCode %d",tossCode);
@@ -34,15 +36,25 @@ int main() {
 			pos=dynamixel.getPosition(&serialPort, idAX12);
 			Utils::sleepMS(500);
 		} while(tossCode==-1 || !(pos>250 && pos <1023));
-		
-		//Lets read some values:
-		int load = dynamixel.getLoad(&serialPort,idAX12);
-		printf("Load : %d\n", load);
+
+
 		//setting position.
 		if (pos>250 && pos <1023)
 			dynamixel.setPosition(&serialPort, idAX12, pos-100);
 		else
 			printf ("\nPosition <%i> under 250 or over 1023\n", pos);
+
+		//Lets read some values:
+		int load = dynamixel.getLoad(&serialPort,idAX12);
+		printf("Load : %d\n", load);
+
+		//Read Torque
+		int torq = dynamixel.getTorque(&serialPort,idAX12);
+		printf("Torque : %d\n", torq);
+
+		//Read Speed
+		int speed = dynamixel.getCurrentSpeed(&serialPort,idAX12);
+		printf("Speed : %d\n", speed);
 
 		serialPort.disconnect();
 	}
