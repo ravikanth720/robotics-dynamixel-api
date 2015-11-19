@@ -36,7 +36,7 @@ int main() {
 	Dynamixel dynamixel;
 //
 //
-	if (serialPort.connect("/dev/ttyUSB0")!=0) {
+	if (serialPort.connect("/dev/ttyUSB1")!=0) {
 		//keep trying to sendTossModeCommand till pos value is right.
 		t = time(NULL) + 5;
 
@@ -45,18 +45,23 @@ int main() {
 		do{
 
 		for(i=1;i<19;i++)
-		do{
-			printf("\n tossCode %d",tossCode);
-			// getting position
+				{
 
-			Utils::sleepMS(50);
 
-			pos = dynamixel.getPosition(&serialPort, i);
+		//	pos = dynamixel.getPosition(&serialPort, i);
 			speed = dynamixel.getCurrentSpeed(&serialPort, i);
-			torq = dynamixel.getTorque(&serialPort, i);
-			load = dynamixel.getLoad(&serialPort, i);
-			fprintf(f, "%d:%d:%d:%d: ", pos, speed, torq, load);
-		} while(tossCode==-1);
+		//	torq = dynamixel.getTorque(&serialPort, i);
+		//	load = dynamixel.getLoad(&serialPort, i);
+			fprintf(f, "%d ", speed);
+		}
+		for(i=1;i<19;i++)
+				{
+			pos = dynamixel.getPosition(&serialPort, i);
+		//	speed = dynamixel.getCurrentSpeed(&serialPort, i);
+		//	torq = dynamixel.getTorque(&serialPort, i);
+		//	load = dynamixel.getLoad(&serialPort, i);
+			fprintf(f, "%d ", pos);
+		}
 
 fprintf(f, "\n");
 }while(time(NULL) < t);
@@ -75,80 +80,70 @@ char *ch[256];
 i=0;
 int k;
 int j=0;
+
 while ((read = getline(&line, &len, fp)) != -1) {
            printf("Retrieved line of length %zu :\n", read);
 
           //  printf("%s", line);
 					ch[i]  = strtok(line," ");
 
-
-					while(ch[i] != NULL ){
-						//
-						//
-
-						 //got to next motor
-						 printf("  %s ",ch[i]);
-
-					  //dynamixel.setLoad(&serialPort,dxlnum,atoi(val));
-						 i=i+1;
-					 	 ch[i] = strtok(NULL," ,");
-
-
-
-
-					}
-					// printf("--------------------------------------------------------------\n");
 					int dxlnum = 1;
-					k = j+18;
-					for(;j<i;j++){
+					j=0;
+					while(ch[i] != NULL ){
+						 printf("  %s  -- %i",ch[i],j);
 
-						 printf("================================>%i  --- %i , %i",dxlnum,i,j);
+						 j=j+1;
+						 if(j==19){
+							 dxlnum=1;
+						 }
 
-						 if(!ch[j])
-						 	printf("<<==============got NULL =======>>>\n");
-					// 	//printf("------------------------------------------------------------+++++++++++--\n");
-					 	printf("\n***  -> %s \n",ch[j]);
-					// 	//printf("----------------------------------------------------------++++++++-\n");
-						val=NULL;
-						val = strtok(ch[j],":");
-					 printf("%s:",val );
-					 if(atoi(val)>0 )
-					    dynamixel.setPosition(&serialPort,dxlnum,atoi(val));
-					 Utils::sleepMS(500);
-					 val = strtok(NULL,":");
-					 printf("%s:",val );
-					 if(atoi(val)>0 )
-					     dynamixel.setSpeed(&serialPort,dxlnum,atoi(val));
-					 val = strtok(NULL,":");
-					 printf("%s:",val );
-					 //dynamixel.setTorque(&serialPort,dxlnum,atoi(val));
-					 val = strtok(NULL,":");
-					 printf("%s:  ",val );
-					 dxlnum=dxlnum+1;
-
-					 }
+						 if(j<19){
+							 dynamixel.setSpeed(&serialPort,dxlnum, atoi(ch[i]));
+							 printf("\n*** %d\n",dxlnum);
+						 }
+						 else if (j>18){
+							 dynamixel.setPosition(&serialPort,dxlnum, atoi(ch[i]));
+						 }
+						 printf("------------------------- !!!!!!\n");
+						 dxlnum =dxlnum+1;
+						 i=i+1;
+					 	 ch[i] = strtok(NULL," ");
+					}
+					Utils::sleepMS(300);
+					// // printf("--------------------------------------------------------------\n");
+					//
+					// for(;j<i;j++){
+					//
+					// 	 printf("================================>%i  --- %i , %i",dxlnum,i,j);
+					//
+					// 	 if(!ch[j])
+					// 	 	printf("<<==============got NULL =======>>>\n");
+					// // 	//printf("------------------------------------------------------------+++++++++++--\n");
+					//  	printf("\n***  -> %s \n",ch[j]);
+					// // 	//printf("----------------------------------------------------------++++++++-\n");
+					// 	val=NULL;
+					// 	val = strtok(ch[j],":");
+					//  printf("%s:",val );
+					// //  if(atoi(val)>=0 )
+					// //     dynamixel.setSpeed(&serialPort,dxlnum, 10);
+					//  //Utils::sleepMS(100);
+					//  val = strtok(NULL,":");
+					//  printf("%s:",val );
+					// //  if(atoi(val)>0 )
+					//  dynamixel.setPosition(&serialPort,dxlnum,atoi(val));
+					//  Utils::sleepMS(100);
+					// //  val = strtok(NULL,":");
+					// //  printf("%s:",val );
+					// //  //dynamixel.setTorque(&serialPort,dxlnum,atoi(val));
+					// //  val = strtok(NULL,":");
+					// //  printf("%s:  ",val );
+					//  dxlnum=dxlnum+1;
+					//
+					//  }
 					 printf("\n");
 					 //	Utils::sleepMS(100);
        }
-		// setting position.
-		// if (pos>250 && pos <1023)
-		// 	dynamixel.setPosition(&serialPort, idAX12, pos-100);
-		// else
-		// 	printf ("\nPosition <%i> under 250 or over 1023\n", pos);
 
-		//Lets read some values:
-		/*
-		int load = dynamixel.getLoad(&serialPort,idAX12);
-		printf("Load : %d\n", load);
-
-		//Read Torque
-		int torq = dynamixel.getTorque(&serialPort,idAX12);
-		printf("Torque : %d\n", torq);
-
-		//Read Speed
-		int speed = dynamixel.getCurrentSpeed(&serialPort,idAX12);
-		printf("Speed : %d\n", speed);
-*/
 		serialPort.disconnect();
 	}
 	else {
