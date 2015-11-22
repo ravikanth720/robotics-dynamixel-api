@@ -491,7 +491,7 @@ int Dynamixel::setSpeed(SerialPort *serialPort, int idAX12, int torq)
 	n=serialPort->getArray(bufferIn, 8);
 
 	if (n>4 && bufferIn[4] == 0)
-		printf("\nid=<%i> set at pos=<%i>\n", idAX12, torq);
+		printf("\nid=<%i> set at speed=<%i>\n", idAX12, torq);
 	else {
 		error=-1;
 		printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
