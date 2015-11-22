@@ -15,13 +15,18 @@
 
 #include "stdio.h"
 #include <string.h>
-
 #include "Dynamixel.h"
 #include "Utils.h"
+#include <iostream>
+#include <fstream>
+#include "SerialPort.h"
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 Dynamixel::Dynamixel()
 {
-	cleanBuffers();
+    cleanBuffers();
 }
 
 Dynamixel::~Dynamixel()
@@ -32,8 +37,8 @@ Dynamixel::~Dynamixel()
 
 void Dynamixel::cleanBuffers()
 {
-	memset(buffer,0,BufferSize);
-	memset(bufferIn,0,BufferSize);
+    memset(buffer, 0, BufferSize);
+    memset(bufferIn, 0, BufferSize);
 }
 
 
@@ -337,7 +342,7 @@ int Dynamixel::getSetLedCommand(byte id, bool onOff)
     if (onOff)
         ledOnOff = 1;
 
-    byte hexHPos=0, hexLPos=0;
+    byte hexHPos = 0, hexLPos = 0;
     toHexHLConversion(ledOnOff, &hexHPos, &hexLPos);
     buffer[pos++] = hexLPos;
     numberOfParameters++;
@@ -362,7 +367,7 @@ int Dynamixel::getReadLedCommand(byte id)
     buffer[pos++] = 0xff;
     buffer[pos++] = id;
 
-	// length
+    // length
     buffer[pos++] = 3;
 
     //the instruction, read => 2
@@ -380,206 +385,206 @@ int Dynamixel::getReadLedCommand(byte id)
 
 int Dynamixel::getPosition(SerialPort *serialPort, int idAX12)
 {
-	int ret=0;
+    int ret = 0;
 
-	int n=getReadAX12PositionCommand(idAX12);
-	long l=serialPort->sendArray(buffer,n);
-	Utils::sleepMS(waitTimeForResponse);
+    int n = getReadAX12PositionCommand(idAX12);
+    long l = serialPort->sendArray(buffer, n);
+    Utils::sleepMS(waitTimeForResponse);
 
-	memset(bufferIn,0,BufferSize);
-	n=serialPort->getArray(bufferIn, 8);
+    memset(bufferIn, 0, BufferSize);
+    n = serialPort->getArray(bufferIn, 8);
 
-	short pos = -1;
-	if (n>7)
-	{
-		pos = fromHexHLConversion(bufferIn[5], bufferIn[6]);
-	}
+    short pos = -1;
+    if (n > 7)
+    {
+        pos = fromHexHLConversion(bufferIn[5], bufferIn[6]);
+    }
 
-	printf("\nid=<%i> pos=<%i> length=<%i>\n", idAX12, pos, n);
-	if (pos<0 || pos > 1023)
-		ret=-2;
-	else
-		ret=pos;
+    printf("\nid=<%i> pos=<%i> length=<%i>\n", idAX12, pos, n);
+    if (pos < 0 || pos > 1023)
+        ret = -2;
+    else
+        ret = pos;
 
-	return ret;
+    return ret;
 }
 //ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
 
 int Dynamixel::getCurrentSpeed(SerialPort *serialPort, int idAX12)
 {
-	int ret=0;
+    int ret = 0;
 
-	int n=getReadAX12CurrentSpeedCommand(idAX12);
-	long l=serialPort->sendArray(buffer,n);
-	Utils::sleepMS(waitTimeForResponse);
+    int n = getReadAX12CurrentSpeedCommand(idAX12);
+    long l = serialPort->sendArray(buffer, n);
+    Utils::sleepMS(waitTimeForResponse);
 
-	memset(bufferIn,0,BufferSize);
-	n=serialPort->getArray(bufferIn, 8);
+    memset(bufferIn, 0, BufferSize);
+    n = serialPort->getArray(bufferIn, 8);
 
-	short pos = -1;
-	if (n>7)
-	{
-		pos = fromHexHLConversion(bufferIn[5], bufferIn[6]);
-	}
+    short pos = -1;
+    if (n > 7)
+    {
+        pos = fromHexHLConversion(bufferIn[5], bufferIn[6]);
+    }
 
-	printf("\nid=<%i> pos=<%i> length=<%i>\n", idAX12, pos, n);
-	if (pos<0 || pos > 1023)
-		ret=-2;
-	else
-		ret=pos;
+    printf("\nid=<%i> pos=<%i> length=<%i>\n", idAX12, pos, n);
+    if (pos < 0 || pos > 1023)
+        ret = -2;
+    else
+        ret = pos;
 
-	return ret;
+    return ret;
 }
 
 int Dynamixel::getTorque(SerialPort *serialPort, int idAX12)
 {
-	int ret=0;
+    int ret = 0;
 
-	int n=getReadAX12TorqueCommand(idAX12);
-	long l=serialPort->sendArray(buffer,n);
-	Utils::sleepMS(waitTimeForResponse);
+    int n = getReadAX12TorqueCommand(idAX12);
+    long l = serialPort->sendArray(buffer, n);
+    Utils::sleepMS(waitTimeForResponse);
 
-	memset(bufferIn,0,BufferSize);
-	n=serialPort->getArray(bufferIn, 8);
+    memset(bufferIn, 0, BufferSize);
+    n = serialPort->getArray(bufferIn, 8);
 
-	short pos = -1;
-	if (n>7)
-	{
-		pos = fromHexHLConversion(bufferIn[5], bufferIn[6]);
-	}
+    short pos = -1;
+    if (n > 7)
+    {
+        pos = fromHexHLConversion(bufferIn[5], bufferIn[6]);
+    }
 
-	printf("\nid=<%i> pos=<%i> length=<%i>\n", idAX12, pos, n);
-	if (pos<0 || pos > 1023)
-		ret=-2;
-	else
-		ret=pos;
+    printf("\nid=<%i> pos=<%i> length=<%i>\n", idAX12, pos, n);
+    if (pos < 0 || pos > 1023)
+        ret = -2;
+    else
+        ret = pos;
 
-	return ret;
+    return ret;
 }
 
 int Dynamixel::setTorque(SerialPort *serialPort, int idAX12, int torq)
 {
-	int error=0;
+    int error = 0;
 
-	int n=getSetAX12TorqueCommand(idAX12, torq);
-	long l=serialPort->sendArray(buffer,n);
-	Utils::sleepMS(waitTimeForResponse);
+    int n = getSetAX12TorqueCommand(idAX12, torq);
+    long l = serialPort->sendArray(buffer, n);
+    Utils::sleepMS(waitTimeForResponse);
 
-	memset(bufferIn,0,BufferSize);
-	n=serialPort->getArray(bufferIn, 8);
+    memset(bufferIn, 0, BufferSize);
+    n = serialPort->getArray(bufferIn, 8);
 
-	if (n>4 && bufferIn[4] == 0)
-		printf("\nid=<%i> set at pos=<%i>\n", idAX12, torq);
-	else {
-		error=-1;
-		printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
-		bf(bufferIn, n);
-	}
+    if (n > 4 && bufferIn[4] == 0)
+        printf("\nid=<%i> set at pos=<%i>\n", idAX12, torq);
+    else {
+        error = -1;
+        printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
+        bf(bufferIn, n);
+    }
 
-	return error;
+    return error;
 }
 
 int Dynamixel::setSpeed(SerialPort *serialPort, int idAX12, int torq)
 {
-	int error=0;
+    int error = 0;
 
-	int n=getSetAX12SpeedCommand(idAX12, torq);
-	long l=serialPort->sendArray(buffer,n);
-	Utils::sleepMS(waitTimeForResponse);
+    int n = getSetAX12SpeedCommand(idAX12, torq);
+    long l = serialPort->sendArray(buffer, n);
+    Utils::sleepMS(waitTimeForResponse);
 
-	memset(bufferIn,0,BufferSize);
-	n=serialPort->getArray(bufferIn, 8);
+    memset(bufferIn, 0, BufferSize);
+    n = serialPort->getArray(bufferIn, 8);
 
-	if (n>4 && bufferIn[4] == 0)
-		printf("\nid=<%i> set at pos=<%i>\n", idAX12, torq);
-	else {
-		error=-1;
-		printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
-		bf(bufferIn, n);
-	}
+    if (n > 4 && bufferIn[4] == 0)
+        printf("\nid=<%i> set at pos=<%i>\n", idAX12, torq);
+    else {
+        error = -1;
+        printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
+        bf(bufferIn, n);
+    }
 
-	return error;
+    return error;
 }
 
 
 //eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 int Dynamixel::getLoad(SerialPort *serialPort, int idAX12)
 {
-    int ret=0;
+    int ret = 0;
 
-    int n=getReadAX12LoadCommand(idAX12);
-    long l=serialPort->sendArray(buffer,n);
+    int n = getReadAX12LoadCommand(idAX12);
+    long l = serialPort->sendArray(buffer, n);
     Utils::sleepMS(waitTimeForResponse);
 
-    memset(bufferIn,0,BufferSize);
-    n=serialPort->getArray(bufferIn, 8);
+    memset(bufferIn, 0, BufferSize);
+    n = serialPort->getArray(bufferIn, 8);
 
     short load = -1;
-    if (n>7)
+    if (n > 7)
     {
         load = fromHexHLConversion(bufferIn[5], bufferIn[6]);
     }
 
     printf("\nid=<%i> load=<%i> length=<%i>\n", idAX12, load, n);
-    if (load<0 || load > 1023)
-        ret=-2;
+    if (load < 0 || load > 1023)
+        ret = -2;
     else
-        ret=load;
+        ret = load;
 
     return ret;
 }
 
 int Dynamixel::setPosition(SerialPort *serialPort, int idAX12, int position)
 {
-	int error=0;
+    int error = 0;
 
-	int n=getSetAX12PositionCommand(idAX12, position);
-	long l=serialPort->sendArray(buffer,n);
-	Utils::sleepMS(waitTimeForResponse);
+    int n = getSetAX12PositionCommand(idAX12, position);
+    long l = serialPort->sendArray(buffer, n);
+    Utils::sleepMS(waitTimeForResponse);
 
-	memset(bufferIn,0,BufferSize);
-	n=serialPort->getArray(bufferIn, 8);
+    memset(bufferIn, 0, BufferSize);
+    n = serialPort->getArray(bufferIn, 8);
 
-	if (n>4 && bufferIn[4] == 0)
-		printf("\nid=<%i> set at pos=<%i>\n", idAX12, position);
-	else {
-		error=-1;
-		printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
-		bf(bufferIn, n);
-	}
+    if (n > 4 && bufferIn[4] == 0)
+        printf("\nid=<%i> set at pos=<%i>\n", idAX12, position);
+    else {
+        error = -1;
+        printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
+        bf(bufferIn, n);
+    }
 
-	return error;
+    return error;
 }
 
 int Dynamixel::sendTossModeCommand(SerialPort *serialPort)
 {
-	byte tossModeCommandBuffer[15];
-	tossModeCommandBuffer[0]='t';
-	tossModeCommandBuffer[1]='\n';
-	tossModeCommandBuffer[2]=0;
+    byte tossModeCommandBuffer[15];
+    tossModeCommandBuffer[0] = 't';
+    tossModeCommandBuffer[1] = '\n';
+    tossModeCommandBuffer[2] = 0;
 
-	int n=serialPort->sendArray(tossModeCommandBuffer, 2);
-	Utils::sleepMS(waitTimeForResponse);
-	int n1=serialPort->bytesToRead();
-	serialPort->getArray(tossModeCommandBuffer, 15);
+    int n = serialPort->sendArray(tossModeCommandBuffer, 2);
+    Utils::sleepMS(waitTimeForResponse);
+    int n1 = serialPort->bytesToRead();
+    serialPort->getArray(tossModeCommandBuffer, 15);
 
-	serialPort->clear();
-	Utils::sleepMS(1);
+    serialPort->clear();
+    Utils::sleepMS(1);
 
-	return n;
+    return n;
 }
 
 void Dynamixel::bf (byte *buffer, int n)
 {
-	printf ("Response (length <%i>)\n",n);
-	for (int i=0;i<n;i++)
-	{
-		//printf("%i [%c]", buffer[i], buffer[i]);
-		printf("%i", buffer[i]);
-		if (i<(n-1))
-		{
-			printf(",%i", buffer[i]);
-		}
-	}
-	printf("\n");
+    printf ("Response (length <%i>)\n", n);
+    for (int i = 0; i < n; i++)
+    {
+        //printf("%i [%c]", buffer[i], buffer[i]);
+        printf("%i", buffer[i]);
+        if (i < (n - 1))
+        {
+            printf(",%i", buffer[i]);
+        }
+    }
+    printf("\n");
 }
