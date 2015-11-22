@@ -36,7 +36,7 @@ int main() {
 	Dynamixel dynamixel;
 //
 //
-	if (serialPort.connect("/dev/ttyUSB1")!=0) {
+	if (serialPort.connect("/dev/ttyUSB0")!=0) {
 		//keep trying to sendTossModeCommand till pos value is right.
 		t = time(NULL) + 5;
 
@@ -109,7 +109,7 @@ while ((read = getline(&line, &len, fp)) != -1) {
 						 i=i+1;
 					 	 ch[i] = strtok(NULL," ");
 					}
-					Utils::sleepMS(300);
+					Utils::sleepMS(1000);
 					// // printf("--------------------------------------------------------------\n");
 					//
 					// for(;j<i;j++){
