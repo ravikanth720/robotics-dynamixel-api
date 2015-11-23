@@ -12,18 +12,19 @@ using namespace std;
 #include "SerialPort.h"
 #include "Dynamixel.h"
 #include "Utils.h"
+#include <stdlib.h>
 
 float timedifference_msec(struct timeval t0, struct timeval t1)
 {
 	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
-float speed_constant = 52547.85241;
+const float speed_constant = 52547.85241;
 
 struct BioloidState{
 	int pos[18];
 	double tm[18];
-	struct BioloidState *next; 	
+	struct BioloidState *next;
 };
 
 struct setNextPos{
@@ -45,13 +46,16 @@ int main() {
 	int choice;
 	int ii = 1, i = 0;
 	int load, torq, speed;
+	double tm;
 	SerialPort serialPort;
 	Dynamixel dynamixel;
 	int quitOption = 0;
 	time_t s, t;
 	FILE *f = fopen("positions.txt", "w");
 	struct BioloidState *bs_initial;
-	struct setNextPos *snp_init; 
+	struct setNextPos *snp_init;
+	struct BioloidState *bs_prev;
+	struct BioloidState *bs;
 
 	if (serialPort.connect("/dev/ttyUSB0") != 0) {
 		//keep trying to sendTossModeCommand till pos value is right.
@@ -132,7 +136,7 @@ int main() {
 
 				s = time(NULL);
 				gettimeofday(&t0, 0);
-				
+
 				do {
 					pos = dynamixel.getPosition(&serialPort, 2);
 					t = time(NULL);
@@ -148,6 +152,52 @@ int main() {
 				printf("\n THANK U");
 				quitOption = 1;
 				break;
+			case 5: //Imitaion learning all motors
+				printf("In case 5");
+				bs_prev = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
+// TODO - make a seperate function -- ReadBioloidState()
+				s = time(NULL);
+				gettimeofday(&t0, 0);
+				for(i=1; i<=18; i++){
+					printf("Setting initial state");
+					pos = dynamixel.getPosition(&serialPort, i);
+					bs_prev->pos[i-1] = pos;
+					t = time(NULL);
+					gettimeofday(&t1, 0);
+					//printf("%s\n", difftime(t,s));
+					tm = timedifference_msec(t0, t1);
+					t0 = t1;
+					bs_prev->tm[i-1] = tm;
+					bs_prev->next = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
+					fprintf(f, "%d  %lf ", pos, tm);
+				}
+				fprintf(f, "\n");
+				Utils::sleepMS(90);
+				bs_initial = bs_prev;
+				do {
+					printf("Here we go again");
+					for(i=1; i<=18; i++){
+						bs = bs_prev->next;
+						pos = dynamixel.getPosition(&serialPort, i);
+						bs->pos[i-1] = pos;
+						t = time(NULL);
+						gettimeofday(&t1, 0);
+						//printf("%s\n", difftime(t,s));
+						tm = timedifference_msec(t0, t1);
+						t0 = t1;
+						bs->tm[i-1] = tm;
+						fprintf(f, "%d  %lf ", pos, tm);
+						bs->next = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
+						bs_prev = bs;
+					}
+					fprintf(f, "\n");
+					Utils::sleepMS(90);
+				} while (time(NULL) < s + 10);
+				fclose(f);
+				printf("Aaagara babbuu !!\n" );
+				break;
+
+
 			}
 		} while (quitOption == 0);
 		serialPort.disconnect();
