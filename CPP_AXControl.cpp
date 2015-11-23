@@ -12,21 +12,26 @@ using namespace std;
 #include "SerialPort.h"
 #include "Dynamixel.h"
 #include "Utils.h"
+#include <string.h>
+#include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 float timedifference_msec(struct timeval t0, struct timeval t1)
 {
 	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
-float speed_constant = 52547.85241;
+float speed_constant = 525.4785241;
 
-struct BioloidState{
+struct BioloidState {
 	int pos[18];
 	double tm[18];
-	struct BioloidState *next; 	
+	struct BioloidState *next;
 };
 
-struct setNextPos{
+struct setNextPos {
 	int pos[18];
 	int spd[18];
 	double time_unit;
@@ -49,9 +54,21 @@ int main() {
 	Dynamixel dynamixel;
 	int quitOption = 0;
 	time_t s, t;
-	FILE *f = fopen("positions.txt", "w");
+	FILE *f;
 	struct BioloidState *bs_initial;
-	struct setNextPos *snp_init; 
+	struct setNextPos *snp_init;
+	char *ch;
+	char * line = NULL;
+	int prevPositions[18];
+	float prevTimestamps[18];
+	float currPos, currTime;
+	int  currSpeed;
+	float deltaT = 0, deltaD;
+	int k = 0;
+	size_t len = 0;
+	ssize_t read;
+
+	//setting initial values
 
 	if (serialPort.connect("/dev/ttyUSB0") != 0) {
 		//keep trying to sendTossModeCommand till pos value is right.
@@ -77,10 +94,13 @@ int main() {
 			if (ii == 1) {
 				printf("%d***************\n", ii);
 			}
-
+			for (k = 0; k < 18; k++) {
+				prevPositions[k] = -1;
+			}
 
 			switch (choice)
 			{
+
 			case 1:// Read the positions and save them to a file
 
 				printf("\n Bioloid Dynamixel Positions:");
@@ -111,28 +131,43 @@ int main() {
 				break;
 			case 2: // Replay from previous step --> positions file
 				//setting position.
-				if (pos > 250 && pos < 1023)
-					dynamixel.setPosition(&serialPort, idAX12, pos - 100);
-				else
-					printf ("\nPosition <%i> under 250 or over 1023\n", pos);
+				f = fopen("positions.txt", "r");
 
-				//Lets read some values:
-				load = dynamixel.getLoad(&serialPort, idAX12);
-				printf("Load : %d\n", load);
+				while ((read = getline(&line, &len, f)) != -1) {
+					ch  = strtok(line, " ");
+					i = 0;
+					//printf("%s\n",ch );
+					while (ch != NULL ) {
+						currPos = atof(ch);
+						ch = strtok(NULL, " ");
+						currTime = atof(ch);
+						ch = strtok(NULL, " ");
+						if (prevPositions[i] != -1) {
+							
+							deltaD = abs(currPos - prevPositions[i]);
+							deltaT = currTime - prevTimestamps[i];
 
-				//Read Torque
-				torq = dynamixel.getTorque(&serialPort, idAX12);
-				printf("Torque : %d\n", torq);
+							currSpeed = (int)ceil(((float)deltaD / (float)deltaT) * speed_constant);
+							printf("---->>>>%d\n", currSpeed);
+							if(deltaT>20)
+							Utils::sleepMS((int)deltaT - 20);
+							dynamixel.setSpeed(&serialPort, 2, currSpeed);
+						}
 
-				//Read Speed
-				speed = dynamixel.getCurrentSpeed(&serialPort, idAX12);
-				printf("Speed : %d\n", speed);
+						dynamixel.setPosition(&serialPort, 2, int(currPos));
+						prevPositions[i] = (int)currPos;
+						prevTimestamps[i] = currTime;
+						i = i + 1;
+
+					}
+					printf("----------------------------------\n");
+				}
 				break;
 			case 3:// Do this later
-
+				f = fopen("positions.txt", "w");
 				s = time(NULL);
 				gettimeofday(&t0, 0);
-				
+
 				do {
 					pos = dynamixel.getPosition(&serialPort, 2);
 					t = time(NULL);
