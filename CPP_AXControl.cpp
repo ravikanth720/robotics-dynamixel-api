@@ -18,6 +18,21 @@ float timedifference_msec(struct timeval t0, struct timeval t1)
 	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
+float speed_constant = 52547.85241;
+
+struct BioloidState{
+	int pos[18];
+	double tm[18];
+	struct BioloidState *next; 	
+};
+
+struct setNextPos{
+	int pos[18];
+	int spd[18];
+	double time_unit;
+	struct setNextPos *next;
+};
+
 int main() {
 	cout << "AX Control starts" << endl; // prints AX Control
 	struct timeval stop, start;
@@ -35,6 +50,8 @@ int main() {
 	int quitOption = 0;
 	time_t s, t;
 	FILE *f = fopen("positions.txt", "w");
+	struct BioloidState *bs_initial;
+	struct setNextPos *snp_init; 
 
 	if (serialPort.connect("/dev/ttyUSB0") != 0) {
 		//keep trying to sendTossModeCommand till pos value is right.
@@ -49,10 +66,10 @@ int main() {
 
 		do {
 			printf("********Welcome to Bioloid API**************\n");
-			printf("1. Read Positions\n");
-			printf("2. Withdraw Cash\n");
-			printf("3. Motor 2 sim\n");
-			printf("4. Quit\n");
+			printf("1. Imitation learning \n");
+			printf("2. Replay last imitation \n");
+			printf("3. Come to initial position \n");
+			printf("4. Quit \n");
 			printf("******************?**************************?*\n\n");
 			printf("Enter your choice: ");
 			scanf("%d", &choice);
@@ -64,7 +81,7 @@ int main() {
 
 			switch (choice)
 			{
-			case 1:
+			case 1:// Read the positions and save them to a file
 
 				printf("\n Bioloid Dynamixel Positions:");
 				int dxlPos[18];
@@ -92,7 +109,7 @@ int main() {
 
 
 				break;
-			case 2:
+			case 2: // Replay from previous step --> positions file
 				//setting position.
 				if (pos > 250 && pos < 1023)
 					dynamixel.setPosition(&serialPort, idAX12, pos - 100);
@@ -111,10 +128,11 @@ int main() {
 				speed = dynamixel.getCurrentSpeed(&serialPort, idAX12);
 				printf("Speed : %d\n", speed);
 				break;
-			case 3:
+			case 3:// Do this later
 
 				s = time(NULL);
 				gettimeofday(&t0, 0);
+				
 				do {
 					pos = dynamixel.getPosition(&serialPort, 2);
 					t = time(NULL);
@@ -126,7 +144,7 @@ int main() {
 				fclose(f);
 				printf("Aaagara babbuu !!\n" );
 				break;
-			case 4:
+			case 4: // Quit
 				printf("\n THANK U");
 				quitOption = 1;
 				break;
