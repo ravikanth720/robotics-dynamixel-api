@@ -143,14 +143,13 @@ int main() {
 						currTime = atof(ch);
 						ch = strtok(NULL, " ");
 						if (prevPositions[i] != -1) {
-							
+
 							deltaD = abs(currPos - prevPositions[i]);
 							deltaT = currTime - prevTimestamps[i];
 
 							currSpeed = (int)ceil(((float)deltaD / (float)deltaT) * speed_constant);
 							printf("---->>>>%d\n", currSpeed);
-							if(deltaT>20)
-							Utils::sleepMS((int)deltaT - 20);
+
 							dynamixel.setSpeed(&serialPort, 2, currSpeed);
 						}
 
@@ -160,7 +159,8 @@ int main() {
 						i = i + 1;
 
 					}
-					printf("----------------------------------\n");
+					if (deltaT > 20)
+						Utils::sleepMS((int)deltaT - 20);
 				}
 				break;
 			case 3:// Do this later
