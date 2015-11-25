@@ -119,6 +119,34 @@ int Dynamixel::getReadAX12CurrentSpeedCommand(byte id)
     return pos;
 }
 
+//Read Speed of a Motor
+int Dynamixel::getReadAX12SpeedCommand(byte id)
+{
+    //OXFF 0XFF ID LENGTH INSTRUCTION PARAMETER1 �PARAMETER N CHECK SUM
+    int pos = 0;
+
+    buffer[pos++] = 0xff;
+    buffer[pos++] = 0xff;
+    buffer[pos++] = id;
+
+    // length = 4
+    buffer[pos++] = 4; //placeholder
+
+    //the instruction, read => 2
+    buffer[pos++] = 2;
+
+    // pos registers 32 and 33
+    buffer[pos++] = 32;
+
+    //bytes to read
+    buffer[pos++] = 2;
+
+    byte checksum = checkSumatory(buffer, pos);
+    buffer[pos++] = checksum;
+
+    return pos;
+}
+
 // Read Mortor Torque
 int Dynamixel::getReadAX12TorqueCommand(byte id)
 {
@@ -427,14 +455,42 @@ int Dynamixel::getCurrentSpeed(SerialPort *serialPort, int idAX12)
         pos = fromHexHLConversion(bufferIn[5], bufferIn[6]);
     }
 
-    printf("\nid=<%i> pos=<%i> length=<%i>\n", idAX12, pos, n);
-    if (pos < 0 || pos > 1023)
-        ret = -2;
-    else
+    printf("\nid=<%i> curSpeed=<%i> length=<%i>\n", idAX12, pos, n);
+    // if (pos < 0 || pos > 1023)
+    //     ret = -2;
+    // else
         ret = pos;
 
     return ret;
 }
+
+int Dynamixel::getSpeed(SerialPort *serialPort, int idAX12)
+{
+    int ret = 0;
+
+    int n = getReadAX12SpeedCommand(idAX12);
+    long l = serialPort->sendArray(buffer, n);
+    Utils::sleepMS(waitTimeForResponse);
+
+    memset(bufferIn, 0, BufferSize);
+    n = serialPort->getArray(bufferIn, 8);
+
+    short pos = -1;
+    if (n > 7)
+    {
+        pos = fromHexHLConversion(bufferIn[5], bufferIn[6]);
+    }
+
+    printf("\nid=<%i> speed=<%i> length=<%i>\n", idAX12, pos, n);
+    // if (pos < 0 || pos > 1023)
+    //     ret = -2;
+    // else
+        ret = pos;
+
+    return ret;
+}
+
+
 
 int Dynamixel::getTorque(SerialPort *serialPort, int idAX12)
 {
@@ -496,10 +552,10 @@ int Dynamixel::setSpeed(SerialPort *serialPort, int idAX12, int torq)
     n = serialPort->getArray(bufferIn, 8);
 
     if (n > 4 && bufferIn[4] == 0)
-        printf("\nid=<%i> set at pos=<%i>\n", idAX12, torq);
+        printf("\nid=<%i> set at speed =<%i>\n", idAX12, torq);
     else {
         error = -1;
-        printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
+        printf("\nid=<%i> Speed error: <%i>\n", idAX12, bufferIn[4]);
         bf(bufferIn, n);
     }
 
@@ -549,7 +605,7 @@ int Dynamixel::setPosition(SerialPort *serialPort, int idAX12, int position)
         printf("\nid=<%i> set at pos=<%i>\n", idAX12, position);
     else {
         error = -1;
-        printf("\nid=<%i> error: <%i>\n", idAX12, bufferIn[4]);
+        printf("\nid=<%i> Pos error: <%i>\n", idAX12, bufferIn[4]);
         bf(bufferIn, n);
     }
 

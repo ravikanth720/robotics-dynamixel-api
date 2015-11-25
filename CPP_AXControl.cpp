@@ -24,7 +24,7 @@ float timedifference_msec(struct timeval t0, struct timeval t1)
 	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
-const float speed_constant = 52547.85241;
+const float speed_constant = 5264.785241;
 
 
 struct BioloidState {
@@ -58,6 +58,7 @@ int main() {
 	int quitOption = 0;
 	time_t s, t;
 	FILE *f;
+	FILE *ft;
 	struct BioloidState *bs_initial;
 	struct setNextPos *snp_init;
 	struct BioloidState *bs_prev;
@@ -65,13 +66,22 @@ int main() {
 	char *ch;
 	char * line = NULL;
 	int prevPositions[18];
-	float prevTimestamps[18];
-	float currPos, currTime;
+	double prevTimestamps[18];
+	int currPos;
+	double currTime;
 	int  currSpeed;
-	float deltaT = 0, deltaD;
+	double deltaT ;
+	int deltaD;
 	int k = 0;
 	size_t len = 0;
 	ssize_t read;
+	bool flip = false;
+	int spos = 0;
+	int sprevpos = 0;
+	float stime = 0.0;
+	float sprevtime = 0.0;
+	int sr_speed =0;
+	int sr_cur_speed=0;
 
 	//setting initial values
 
@@ -90,15 +100,13 @@ int main() {
 			printf("********Welcome to Bioloid API**************\n");
 			printf("1. Imitation learning \n");
 			printf("2. Replay last imitation \n");
-			printf("3. Come to initial position \n");
+			printf("3. Single Dynamixel Read \n");
+			printf("6. Single Dynamixel Write \n");
 			printf("4. Quit \n");
 			printf("******************?**************************?*\n\n");
 			printf("Enter your choice: ");
 			scanf("%d", &choice);
 
-			if (ii == 1) {
-				printf("%d***************\n", ii);
-			}
 			for (k = 0; k < 18; k++) {
 				prevPositions[k] = -1;
 			}
@@ -139,96 +147,186 @@ int main() {
 				f = fopen("positions.txt", "r");
 
 				while ((read = getline(&line, &len, f)) != -1) {
+					printf("%s\n", line );
 					ch  = strtok(line, " ");
+
 					i = 0;
-					//printf("%s\n",ch );
+					printf("-%s-\n", ch );
+					flip = true;
 					while (ch != NULL ) {
-						currPos = atof(ch);
-						ch = strtok(NULL, " ");
-						currTime = atof(ch);
-						ch = strtok(NULL, " ");
-						if (prevPositions[i] != -1) {
+						// printf("-->>" );
+						if (flip) {
+							currPos = (int)atof(ch);
 
-							deltaD = abs(currPos - prevPositions[i]);
-							deltaT = currTime - prevTimestamps[i];
+							printf("[%d] [%d] %d ", currPos, prevPositions[i], i);
+							flip = false;
+						} else {
+							currTime = (float) atof(ch);
 
-							currSpeed = (int)ceil(((float)deltaD / (float)deltaT) * speed_constant);
-							printf("---->>>>%d\n", currSpeed);
 
-							dynamixel.setSpeed(&serialPort, 2, currSpeed);
+							printf("{%f} ", currTime);
+							flip = true;
 						}
 
-						dynamixel.setPosition(&serialPort, 2, int(currPos));
-						prevPositions[i] = (int)currPos;
-						prevTimestamps[i] = currTime;
-						i = i + 1;
+						//	ch = strtok(NULL, " ");
+//						ch = strtok(NULL, " ");
+						//	currTime = atof(ch);
+						//	printf("%lf ", currTime);
+						ch = strtok(NULL, " ");
+						//printf("%d %f ",currPos,currTime );
+						//ch = strtok(NULL, " ");
+						if (flip && i != 0) {
+							//printf("\nPOS---- %d , %d,%i\n", currPos, prevPo	sitions[i], i);
+							//printf("\nTIME----!!!!! %f , %f,%i\n", currTime, prevTimestamps[i], i);
+							deltaD = abs(currPos - prevPositions[i]);
+							//deltaT = (float) ((float)currTime - (float)prevTimestamps[i]);
+							printf("----XX %d %f\n", deltaD, currTime);
+							currSpeed = ceil((deltaD / (float)currTime) * speed_constant);
+							printf("---->>>>%d\n", currSpeed);
+
+
+						}
+
+
+
+
+						if (flip) {
+							i = i + 1;
+							prevPositions[i] = currPos;
+							prevTimestamps[i] = currTime;
+							printf("------>>>>>> final : %d %d\n", currPos, currSpeed );
+
+							dynamixel.setSpeed(&serialPort, i, currSpeed);
+							dynamixel.setPosition(&serialPort, i, int(currPos));
+
+						}
 
 					}
-					if (deltaT > 20)
-						Utils::sleepMS((int)deltaT - 20);
+					if (currTime > 200)
+						Utils::sleepMS((int)currTime - 200);
+					printf("END \n");
+
 				}
+				fclose(f);
 				break;
 			case 3:// Do this later
-				f = fopen("positions.txt", "w");
+
+				f = fopen("singlepositions.txt", "w");
 				s = time(NULL);
 				gettimeofday(&t0, 0);
-
 				do {
 					pos = dynamixel.getPosition(&serialPort, 2);
+					sr_speed = dynamixel.getSpeed(&serialPort, 2);
+					sr_cur_speed = dynamixel.getCurrentSpeed(&serialPort, 2);
 					t = time(NULL);
 					gettimeofday(&t1, 0);
 					//printf("%s\n", difftime(t,s));
-					fprintf(f, "%d  %lf\n", pos, timedifference_msec(t0, t1));
+					fprintf(f, "%d %d %d %lf\n", pos,sr_cur_speed,sr_speed, timedifference_msec(t0, t1));
 					Utils::sleepMS(100);
-				} while (time(NULL) < s + 5);
+				} while (time(NULL) < s + 10);
 				fclose(f);
 				printf("Aaagara babbuu !!\n" );
+				break;
+			case 6:
+				f = fopen("singlepositions.txt", "r");
+
+				while ((read = getline(&line, &len, f)) != -1) {
+					//printf("%s\n", line );
+					ch  = strtok(line, " ");
+					while (ch != NULL ) {
+						spos  = atoi(ch);
+						ch = strtok(NULL, " ");
+						currSpeed = atoi(ch);
+						ch = strtok(NULL, " ");
+						ch = strtok(NULL, " ");
+
+						stime = (float)atof(ch);
+						printf("%d, %d    %f \n", spos, currSpeed, stime );
+						if (sprevtime != 0.0f) {
+
+							deltaT = stime - sprevtime ;
+							//printf("%d, %d    %f \n", spos, sprevpos, deltaT );
+							deltaD  = spos - sprevpos;
+							// printf(" %f\n", (abs(deltaD) / deltaT) * speed_constant );
+							// currSpeed =  ((deltaD) / deltaT) * speed_constant ;
+							// printf("-------------------------> %d %f -> %f \n", spos, (stime -  sprevtime), currSpeed );
+							//dynamixel.setSpeed(&serialPort, 2, (int)abs(currSpeed));
+							//dynamixel.setSpeed(&serialPort, 2, 0);
+							//dynamixel.getSpeed(&serialPort,2);
+
+						}
+						dynamixel.setSpeed(&serialPort, 2, currSpeed);
+						dynamixel.setPosition(&serialPort, 2, spos);
+						if (sprevtime == 0.0) {
+
+							Utils::sleepMS(3000);
+
+						}
+						if (deltaT > 30)
+							Utils::sleepMS((int)deltaT );
+						sprevtime = stime;
+						sprevpos = spos;
+						ch = strtok(NULL, " ");
+					}
+				}
 				break;
 			case 4: // Quit
 				printf("\n THANK U");
 				quitOption = 1;
 				break;
 			case 5: //Imitaion learning all motors
-				printf("In case 5");
+
+				// do {
+				// 	tossCode =  dynamixel.sendTossModeCommand(&serialPort);
+				// 	printf("\n tossCode %d", tossCode);
+				// 	// getting position
+				// 	pos = dynamixel.getPosition(&serialPort, idAX12);
+				// 	Utils::sleepMS(500);
+				// } while (tossCode == -1 || !(pos > 250 && pos < 1023));
+
+				printf("In case 5\n");
+				f = fopen("positions.txt", "w");
+				ft = fopen("timestamps.txt", "w");
 				bs_prev = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
 // TODO - make a seperate function -- ReadBioloidState()
 				s = time(NULL);
 				gettimeofday(&t0, 0);
-				for(i=1; i<=18; i++){
-					printf("Setting initial state");
+				for (i = 1; i <= 18; i++) {
+					printf("Getting initial state %d", i);
 					pos = dynamixel.getPosition(&serialPort, i);
-					bs_prev->pos[i-1] = pos;
+					bs_prev->pos[i - 1] = pos;
 					t = time(NULL);
 					gettimeofday(&t1, 0);
 					//printf("%s\n", difftime(t,s));
 					tm = timedifference_msec(t0, t1);
 					t0 = t1;
-					bs_prev->tm[i-1] = tm;
+					bs_prev->tm[i - 1] = tm;
 					bs_prev->next = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
-					fprintf(f, "%d  %lf ", pos, tm);
+					fprintf(f, "%d %lf ", pos, tm);
 				}
 				fprintf(f, "\n");
-				Utils::sleepMS(90);
+				Utils::sleepMS(100);
 				bs_initial = bs_prev;
 				do {
 					printf("Here we go again");
-					for(i=1; i<=18; i++){
+					for (i = 1; i <= 18; i++) {
 						bs = bs_prev->next;
 						pos = dynamixel.getPosition(&serialPort, i);
-						bs->pos[i-1] = pos;
+						Utils::sleepMS(10);
+						bs->pos[i - 1] = pos;
 						t = time(NULL);
 						gettimeofday(&t1, 0);
 						//printf("%s\n", difftime(t,s));
 						tm = timedifference_msec(t0, t1);
 						t0 = t1;
-						bs->tm[i-1] = tm;
-						fprintf(f, "%d  %lf ", pos, tm);
+						bs->tm[i - 1] = tm;
+						fprintf(f, "%d %lf ", pos, tm);
 						bs->next = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
 						bs_prev = bs;
 					}
 					fprintf(f, "\n");
-					Utils::sleepMS(90);
-				} while (time(NULL) < s + 10);
+					Utils::sleepMS(100);
+				} while (time(NULL) < s + 5);
 				fclose(f);
 				printf("Aaagara babbuu !!\n" );
 				break;
