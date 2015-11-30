@@ -80,8 +80,9 @@ int main() {
 	int sprevpos = 0;
 	float stime = 0.0;
 	float sprevtime = 0.0;
-	int sr_speed =0;
-	int sr_cur_speed=0;
+	int sr_speed = 0;
+	int sr_cur_speed = 0;
+	int mr_cur_speed = 0;
 
 	//setting initial values
 
@@ -183,13 +184,7 @@ int main() {
 							printf("----XX %d %f\n", deltaD, currTime);
 							currSpeed = ceil((deltaD / (float)currTime) * speed_constant);
 							printf("---->>>>%d\n", currSpeed);
-
-
 						}
-
-
-
-
 						if (flip) {
 							i = i + 1;
 							prevPositions[i] = currPos;
@@ -221,9 +216,9 @@ int main() {
 					t = time(NULL);
 					gettimeofday(&t1, 0);
 					//printf("%s\n", difftime(t,s));
-					fprintf(f, "%d %d %d %lf\n", pos,sr_cur_speed,sr_speed, timedifference_msec(t0, t1));
-					Utils::sleepMS(100);
-				} while (time(NULL) < s + 10);
+					fprintf(f, "%d %d %d %lf\n", pos, sr_cur_speed, sr_speed, timedifference_msec(t0, t1));
+					Utils::sleepMS(10);
+				} while (time(NULL) < s + 5);
 				fclose(f);
 				printf("Aaagara babbuu !!\n" );
 				break;
@@ -262,8 +257,8 @@ int main() {
 							Utils::sleepMS(3000);
 
 						}
-						if (deltaT > 30)
-							Utils::sleepMS((int)deltaT );
+						if (deltaT > 10)
+							Utils::sleepMS((int)deltaT -10);
 						sprevtime = stime;
 						sprevpos = spos;
 						ch = strtok(NULL, " ");
@@ -286,7 +281,6 @@ int main() {
 
 				printf("In case 5\n");
 				f = fopen("positions.txt", "w");
-				ft = fopen("timestamps.txt", "w");
 				bs_prev = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
 // TODO - make a seperate function -- ReadBioloidState()
 				s = time(NULL);
@@ -294,6 +288,7 @@ int main() {
 				for (i = 1; i <= 18; i++) {
 					printf("Getting initial state %d", i);
 					pos = dynamixel.getPosition(&serialPort, i);
+					mr_cur_speed = dynamixel.getCurrentSpeed(&serialPort, i);
 					bs_prev->pos[i - 1] = pos;
 					t = time(NULL);
 					gettimeofday(&t1, 0);
@@ -301,18 +296,18 @@ int main() {
 					tm = timedifference_msec(t0, t1);
 					t0 = t1;
 					bs_prev->tm[i - 1] = tm;
-					bs_prev->next = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
-					fprintf(f, "%d %lf ", pos, tm);
+					bs_prev->next = (
+					                    struct BioloidState *) malloc( sizeof(struct BioloidState) );
+					fprintf(f, "%d %d %lf ", pos, mr_cur_speed, tm);
 				}
 				fprintf(f, "\n");
 				Utils::sleepMS(100);
 				bs_initial = bs_prev;
 				do {
-					printf("Here we go again");
 					for (i = 1; i <= 18; i++) {
 						bs = bs_prev->next;
 						pos = dynamixel.getPosition(&serialPort, i);
-						Utils::sleepMS(10);
+						mr_cur_speed = dynamixel.getCurrentSpeed(&serialPort, i);
 						bs->pos[i - 1] = pos;
 						t = time(NULL);
 						gettimeofday(&t1, 0);
@@ -320,16 +315,66 @@ int main() {
 						tm = timedifference_msec(t0, t1);
 						t0 = t1;
 						bs->tm[i - 1] = tm;
-						fprintf(f, "%d %lf ", pos, tm);
+						fprintf(f, "%d %d %lf ", pos, mr_cur_speed, tm);
 						bs->next = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
 						bs_prev = bs;
 					}
 					fprintf(f, "\n");
-					Utils::sleepMS(100);
-				} while (time(NULL) < s + 5);
+				} while (time(NULL) < s + 20);
 				fclose(f);
 				printf("Aaagara babbuu !!\n" );
 				break;
+			case 7:
+				f = fopen("positions.txt", "r");
+
+				while ((read = getline(&line, &len, f)) != -1) {
+					//printf("%s\n", line );
+					i=0;
+					ch  = strtok(line, " ");
+					while (ch != NULL ) {
+						i=i+1;
+						spos  = atoi(ch);
+						ch = strtok(NULL, " ");
+						currSpeed = atoi(ch);
+						ch = strtok(NULL, " ");
+						stime = (float)atof(ch);
+						ch = strtok(NULL, " \n");
+
+						
+						printf("%d, %d    %f \n", spos, currSpeed, stime );
+						if (sprevtime != 0.0f) {
+
+							deltaT = stime - sprevtime ;
+							//printf("%d, %d    %f \n", spos, sprevpos, deltaT );
+							deltaD  = spos - sprevpos;
+							// printf(" %f\n", (abs(deltaD) / deltaT) * speed_constant );
+							// currSpeed =  ((deltaD) / deltaT) * speed_constant ;
+							// printf("-------------------------> %d %f -> %f \n", spos, (stime -  sprevtime), currSpeed );
+							//dynamixel.setSpeed(&serialPort, 2, (int)abs(currSpeed));
+							//dynamixel.setSpeed(&serialPort, 2, 0);
+							//dynamixel.getSpeed(&serialPort,2);
+
+						}
+						if(currSpeed>0)
+						dynamixel.setSpeed(&serialPort, i, currSpeed);
+						if(spos>-1)
+						dynamixel.setPosition(&serialPort, i, spos);
+						if (sprevtime == 0.0) {
+
+							Utils::sleepMS(3000);
+
+						}
+						//if (deltaT > 30)
+						
+						sprevtime = stime;
+						sprevpos = spos;
+						//ch = strtok(NULL, " ");
+					}
+					Utils::sleepMS((int)deltaT + 50);
+				}
+
+				break;
+
 
 
 			}
