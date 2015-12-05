@@ -298,7 +298,7 @@ int main() {
 					bs_prev->tm[i - 1] = tm;
 					bs_prev->next = (
 					                    struct BioloidState *) malloc( sizeof(struct BioloidState) );
-					fprintf(f, "%d %d %lf ", pos, mr_cur_speed, tm);
+					fprintf(f, "%d ", pos);
 				}
 				fprintf(f, "\n");
 				Utils::sleepMS(100);
@@ -315,7 +315,7 @@ int main() {
 						tm = timedifference_msec(t0, t1);
 						t0 = t1;
 						bs->tm[i - 1] = tm;
-						fprintf(f, "%d %d %lf ", pos, mr_cur_speed, tm);
+						fprintf(f, "%d ", pos);
 						bs->next = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
 						bs_prev = bs;
 					}
@@ -340,7 +340,7 @@ int main() {
 						stime = (float)atof(ch);
 						ch = strtok(NULL, " \n");
 
-						
+
 						printf("%d, %d    %f \n", spos, currSpeed, stime );
 						if (sprevtime != 0.0f) {
 
@@ -365,7 +365,7 @@ int main() {
 
 						}
 						//if (deltaT > 30)
-						
+
 						sprevtime = stime;
 						sprevpos = spos;
 						//ch = strtok(NULL, " ");
