@@ -333,7 +333,7 @@ int main() {
 					fprintf(f, "\n");
 					fprintf(ft, "\n");
 					Utils::sleepMS(50);
-				} while (time(NULL) < s + 20);
+				} while (time(NULL) < s + 60);
 
 				fclose(f);
 				fclose(ft);
@@ -342,6 +342,10 @@ int main() {
 			case 7:
 				f = fopen("movement.txt", "r");
 
+				i=0;
+				for(i=1;i<19;i++){
+					dynamixel.setSpeed(&serialPort, i, 150);
+				}	
 				while ((read = getline(&line, &len, f)) != -1) {
 					//printf("%s\n", line );
 					i = 0;
@@ -357,22 +361,22 @@ int main() {
 
 
 						printf("%d, %d    %f \n", spos, currSpeed, stime );
-						if (sprevtime != 0.0f) {
-							deltaT = stime - sprevtime ;
-							deltaD  = spos - sprevpos;
-						}
-						if (currSpeed > 0)
-							dynamixel.setSpeed(&serialPort, i, currSpeed);
+						//if (sprevtime != 0.0f) {
+						//	deltaT = stime - sprevtime ;
+					    //		deltaD  = spos - sprevpos;
+						//}
+						// if (currSpeed > 0)
+						
 						if (spos > -1)
 							dynamixel.setPosition(&serialPort, i, spos);
-						if (sprevtime == 0.0) {
-							Utils::sleepMS(3000);
-						}
-						sprevtime = stime;
-						sprevpos = spos;
+						//if (sprevtime == 0.0) {
+						//	Utils::sleepMS(3000);
+						//}
+						//sprevtime = stime;
+						//sprevpos = spos;
 						//ch = strtok(NULL, " ");
 					}
-					Utils::sleepMS((int)deltaT );
+					//Utils::sleepMS((int)stime/2 );
 				} 
 				fclose(f);
 
