@@ -236,7 +236,7 @@ int main() {
 					break;
 
 
-					case 4: //write only positions to robot
+					case 5: //write only positions to robot
 						ft = fopen("dmp_final.txt", "r");
 						num_line=0;
 						//ft = fopen("/home/ravitejas3/Documents/robotics/FinalProjectCode/myDMPImpl/dmp_positions.txt", "r");
@@ -266,7 +266,7 @@ int main() {
 						fclose(ft);
 						break;
 
-						case 5: // reading values from single motor
+						case 6: // reading values from single motor
 
 							f = fopen("singlepositions.txt", "w");
 							s = time(NULL);
@@ -284,7 +284,7 @@ int main() {
 							printf("Aaagara babbuu !!\n" );
 							break;
 
-							case 6:
+							case 7:
 								f = fopen("singlepositions.txt", "r");
 								while ((read = getline(&line, &len, f)) != -1) {
 									ch  = strtok(line, " ");
@@ -321,13 +321,13 @@ int main() {
 								}
 								break;
 
-							case 7: // Quit
+							case 8: // Quit
 								printf("\n THANK U");
 								quitOption = 1;
 								break;
 
 			//===============================================================================
-			case 8:// Read the positions and save them to a file
+			case 9:// Read the positions and save them to a file
 				printf("\n Bioloid Dynamixel Positions:");
 				int dxlPos[18];
 				ii = 1;
@@ -349,7 +349,7 @@ int main() {
 				else
 					printf ("\nPosition <%i> under 250 or over 1023\n", pos);
 				break;
-			case 9: // Replay from previous step --> positions file
+			case 10: // Replay from previous step --> positions file
 				//setting position.
 				f = fopen("positions.txt", "r");
 				while ((read = getline(&line, &len, f)) != -1) {
@@ -408,7 +408,7 @@ int main() {
 				break;
 
 
-			case 10: //Imitaion learning all motors // reading pos, speed and time from all motors
+			case 11: //Imitaion learning all motors // reading pos, speed and time from all motors
 
 				printf("In case 5\n");
 				f = fopen("movement.txt", "w");
@@ -464,7 +464,7 @@ int main() {
 
 
 
-			case 11:// remove
+			case 12:// remove
 				f = fopen("movement.txt", "r");
 				while ((read = getline(&line, &len, f)) != -1) {
 					//printf("%s\n", line );
