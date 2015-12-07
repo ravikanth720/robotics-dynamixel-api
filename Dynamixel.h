@@ -23,7 +23,7 @@ typedef unsigned char byte;
 class Dynamixel {
 
 	private:
-		static const int waitTimeForResponse=10;
+		static const int waitTimeForResponse=7;
 		static const int BufferSize=1024;
 
 		byte buffer[BufferSize];

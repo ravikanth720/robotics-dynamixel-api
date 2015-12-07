@@ -64,7 +64,9 @@ int main() {
 	struct BioloidState *bs_prev;
 	struct BioloidState *bs;
 	char *ch;
+	char *ch2;
 	char * line = NULL;
+	char * line2 = NULL;
 	int prevPositions[18];
 	double prevTimestamps[18];
 	int currPos;
@@ -75,6 +77,8 @@ int main() {
 	int k = 0;
 	size_t len = 0;
 	ssize_t read;
+	size_t len2 = 0;
+	ssize_t read2;
 	bool flip = false;
 	int spos = 0;
 	int sprevpos = 0;
@@ -83,6 +87,7 @@ int main() {
 	int sr_speed = 0;
 	int sr_cur_speed = 0;
 	int mr_cur_speed = 0;
+	float speed_scaling_factor = 1.0f;
 
 	//setting initial values
 
@@ -99,11 +104,17 @@ int main() {
 
 		do {
 			printf("********Welcome to Bioloid API**************\n");
-			printf("1. Imitation learning \n");
-			printf("2. Replay last imitation \n");
-			printf("3. Single Dynamixel Read \n");
-			printf("6. Single Dynamixel Write \n");
-			printf("4. Quit \n");
+			printf("1. Check on Motor ID: 2 - Read/Write \n");
+			printf("2. OutDated code \n");
+			printf("3. Single Motor[ ID: 2 ] Read Values  w/ speed\n");
+			printf("4. Single Motor[ ID: 2 ] Write Values  w/ speed\n");
+			printf("5. All Motors Read Values w/ speed  using structs\n");
+			printf("6. All Motors Read Values w/ speed \n");
+			printf("7. All Motors Write Values w/ speed \n");
+			printf("8. All Motors Write Values w/ speed DMP \n");
+			printf("9.  All Motors Write Values w/o Speed DMP \n");
+			printf("10. Read Initial Values w/o Speed DMP \n");
+			printf("11. Quit \n");
 			printf("******************?**************************?*\n\n");
 			printf("Enter your choice: ");
 			scanf("%d", &choice);
@@ -114,15 +125,12 @@ int main() {
 
 			switch (choice)
 			{
-
 			case 1:// Read the positions and save them to a file
-
 				printf("\n Bioloid Dynamixel Positions:");
 				int dxlPos[18];
 				ii = 1;
 				dynamixel.setPosition(&serialPort, 2, 728);
 				while (i != 19) {
-
 					int pos = dynamixel.getPosition(&serialPort, ii);
 					Utils::sleepMS(50);
 					printf(" <%i> %d", pos, ii);
@@ -131,26 +139,20 @@ int main() {
 					i = ii;
 				}
 				printf(" \n");
-
 				if (dxlPos[2] > 250 && dxlPos[2] < 1023) {
 					printf("Setting position for dxl 2\n");
 					dynamixel.setSpeed(&serialPort, 2, 53);
 					dynamixel.setPosition(&serialPort, 2, 290);
-
 				}
 				else
 					printf ("\nPosition <%i> under 250 or over 1023\n", pos);
-
-
 				break;
 			case 2: // Replay from previous step --> positions file
 				//setting position.
 				f = fopen("positions.txt", "r");
-
 				while ((read = getline(&line, &len, f)) != -1) {
 					printf("%s\n", line );
 					ch  = strtok(line, " ");
-
 					i = 0;
 					printf("-%s-\n", ch );
 					flip = true;
@@ -163,8 +165,6 @@ int main() {
 							flip = false;
 						} else {
 							currTime = (float) atof(ch);
-
-
 							printf("{%f} ", currTime);
 							flip = true;
 						}
@@ -204,7 +204,7 @@ int main() {
 				}
 				fclose(f);
 				break;
-			case 3:// Do this later
+			case 3: // reading values from single motor
 
 				f = fopen("singlepositions.txt", "w");
 				s = time(NULL);
@@ -215,18 +215,15 @@ int main() {
 					sr_cur_speed = dynamixel.getCurrentSpeed(&serialPort, 2);
 					t = time(NULL);
 					gettimeofday(&t1, 0);
-					//printf("%s\n", difftime(t,s));
 					fprintf(f, "%d %d %d %lf\n", pos, sr_cur_speed, sr_speed, timedifference_msec(t0, t1));
 					Utils::sleepMS(10);
 				} while (time(NULL) < s + 5);
 				fclose(f);
 				printf("Aaagara babbuu !!\n" );
 				break;
-			case 6:
+			case 4:
 				f = fopen("singlepositions.txt", "r");
-
 				while ((read = getline(&line, &len, f)) != -1) {
-					//printf("%s\n", line );
 					ch  = strtok(line, " ");
 					while (ch != NULL ) {
 						spos  = atoi(ch);
@@ -234,13 +231,10 @@ int main() {
 						currSpeed = atoi(ch);
 						ch = strtok(NULL, " ");
 						ch = strtok(NULL, " ");
-
 						stime = (float)atof(ch);
 						printf("%d, %d    %f \n", spos, currSpeed, stime );
 						if (sprevtime != 0.0f) {
-
 							deltaT = stime - sprevtime ;
-							//printf("%d, %d    %f \n", spos, sprevpos, deltaT );
 							deltaD  = spos - sprevpos;
 							// printf(" %f\n", (abs(deltaD) / deltaT) * speed_constant );
 							// currSpeed =  ((deltaD) / deltaT) * speed_constant ;
@@ -253,34 +247,22 @@ int main() {
 						dynamixel.setSpeed(&serialPort, 2, currSpeed);
 						dynamixel.setPosition(&serialPort, 2, spos);
 						if (sprevtime == 0.0) {
-
 							Utils::sleepMS(3000);
-
 						}
 						if (deltaT > 10)
-							Utils::sleepMS((int)deltaT -10);
+							Utils::sleepMS((int)deltaT - 10);
 						sprevtime = stime;
 						sprevpos = spos;
 						ch = strtok(NULL, " ");
 					}
 				}
 				break;
-			case 4: // Quit
-				printf("\n THANK U");
-				quitOption = 1;
-				break;
-			case 5: //Imitaion learning all motors
 
-				// do {
-				// 	tossCode =  dynamixel.sendTossModeCommand(&serialPort);
-				// 	printf("\n tossCode %d", tossCode);
-				// 	// getting position
-				// 	pos = dynamixel.getPosition(&serialPort, idAX12);
-				// 	Utils::sleepMS(500);
-				// } while (tossCode == -1 || !(pos > 250 && pos < 1023));
+			case 5: //Imitaion learning all motors // reading pos, speed and time from all motors
 
 				printf("In case 5\n");
-				f = fopen("positions.txt", "w");
+				f = fopen("movement.txt", "w");
+				ft = fopen("positions.txt", "w");
 				bs_prev = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
 // TODO - make a seperate function -- ReadBioloidState()
 				s = time(NULL);
@@ -299,8 +281,10 @@ int main() {
 					bs_prev->next = (
 					                    struct BioloidState *) malloc( sizeof(struct BioloidState) );
 					fprintf(f, "%d %d %lf ", pos, mr_cur_speed, tm);
+					fprintf(ft, "%d ", pos);
 				}
 				fprintf(f, "\n");
+				fprintf(ft, "\n");
 				Utils::sleepMS(100);
 				bs_initial = bs_prev;
 				do {
@@ -316,67 +300,159 @@ int main() {
 						t0 = t1;
 						bs->tm[i - 1] = tm;
 						fprintf(f, "%d %d %lf ", pos, mr_cur_speed, tm);
+						fprintf(ft, "%d ", pos);
 						bs->next = (struct BioloidState *) malloc( sizeof(struct BioloidState) );
 						bs_prev = bs;
 					}
 					fprintf(f, "\n");
+					fprintf(ft, "\n");
 				} while (time(NULL) < s + 20);
 				fclose(f);
+				fclose(ft);
+				printf("Aaagara babbuu !!\n" );
+				break;
+			case 6: //Imitaion learning all motors // reading pos, speed and time from all motors
+				printf("In case 6\n");
+				f = fopen("movement.txt", "w");
+				ft = fopen("positions.txt", "w");
+				// TODO - make a seperate function -- ReadBioloidState()
+				s = time(NULL);
+				gettimeofday(&t0, 0);
+				do {
+					for (i = 1; i <= 18; i++) {
+						pos = dynamixel.getPosition(&serialPort, i);
+						mr_cur_speed = dynamixel.getCurrentSpeed(&serialPort, i);
+						t = time(NULL);
+						gettimeofday(&t1, 0);
+						//printf("%s\n", difftime(t,s));
+						tm = timedifference_msec(t0, t1);
+						t0 = t1;
+						fprintf(f, "%d %d %lf ", pos, mr_cur_speed, tm);
+						fprintf(ft, "%d ", pos);
+					}
+					fprintf(f, "\n");
+					fprintf(ft, "\n");
+					Utils::sleepMS(50);
+				} while (time(NULL) < s + 20);
+
+				fclose(f);
+				fclose(ft);
 				printf("Aaagara babbuu !!\n" );
 				break;
 			case 7:
-				f = fopen("positions.txt", "r");
+				f = fopen("movement.txt", "r");
 
 				while ((read = getline(&line, &len, f)) != -1) {
 					//printf("%s\n", line );
-					i=0;
+					i = 0;
 					ch  = strtok(line, " ");
 					while (ch != NULL ) {
-						i=i+1;
+						i = i + 1;
 						spos  = atoi(ch);
 						ch = strtok(NULL, " ");
-						currSpeed = atoi(ch);
+						currSpeed = (int)(atoi(ch) * speed_scaling_factor);
 						ch = strtok(NULL, " ");
 						stime = (float)atof(ch);
 						ch = strtok(NULL, " \n");
 
-						
+
 						printf("%d, %d    %f \n", spos, currSpeed, stime );
 						if (sprevtime != 0.0f) {
-
 							deltaT = stime - sprevtime ;
-							//printf("%d, %d    %f \n", spos, sprevpos, deltaT );
 							deltaD  = spos - sprevpos;
-							// printf(" %f\n", (abs(deltaD) / deltaT) * speed_constant );
-							// currSpeed =  ((deltaD) / deltaT) * speed_constant ;
-							// printf("-------------------------> %d %f -> %f \n", spos, (stime -  sprevtime), currSpeed );
-							//dynamixel.setSpeed(&serialPort, 2, (int)abs(currSpeed));
-							//dynamixel.setSpeed(&serialPort, 2, 0);
-							//dynamixel.getSpeed(&serialPort,2);
-
 						}
-						if(currSpeed>0)
-						dynamixel.setSpeed(&serialPort, i, currSpeed);
-						if(spos>-1)
-						dynamixel.setPosition(&serialPort, i, spos);
+						if (currSpeed > 0)
+							dynamixel.setSpeed(&serialPort, i, currSpeed);
+						if (spos > -1)
+							dynamixel.setPosition(&serialPort, i, spos);
 						if (sprevtime == 0.0) {
-
 							Utils::sleepMS(3000);
-
 						}
-						//if (deltaT > 30)
-						
+						sprevtime = stime;
+						sprevpos = spos;
+						//ch = strtok(NULL, " ");
+					}
+					Utils::sleepMS((int)deltaT );
+				} 
+				fclose(f);
+
+				break;
+			case 8:
+				f = fopen("dmp_final.txt", "r");
+				while ((read = getline(&line, &len, f)) != -1) {
+					//printf("%s\n", line );
+					//read2 = getline(&line2, &len2, ft);
+					i = 0;
+					ch  = strtok(line, " ");
+					//ch2 = strtok(line2, " ");
+					while (ch != NULL ) {
+						i = i + 1;
+						// ch2 = strtok(NULL, " ");
+						spos  = atoi(ch);
+						//spos  = atoi(ch2);
+						ch = strtok(NULL, " ");
+
+						currSpeed = atoi(ch);
+						ch = strtok(NULL, " ");
+						stime = (float)atof(ch);
+						ch = strtok(NULL, " \n");
+						//ch2 = strtok(NULL, " \n");
+
+
+						printf("%d, %d    %f \n", spos, currSpeed, stime );
+						if (sprevtime != 0.0f) {
+							deltaT = stime - sprevtime ;
+							deltaD  = spos - sprevpos;
+						}
+						if (currSpeed > 0)
+						 	dynamixel.setSpeed(&serialPort, i, currSpeed);
+						if (spos > -1)
+						 	dynamixel.setPosition(&serialPort, i, spos);
+						if (sprevtime == 0.0) {
+							Utils::sleepMS(3000);
+						}
 						sprevtime = stime;
 						sprevpos = spos;
 						//ch = strtok(NULL, " ");
 					}
 					Utils::sleepMS((int)deltaT + 50);
 				}
+				fclose(f);
+				fclose(ft);
 
 				break;
+			case 9: //write only positions to robot
+				//ft = fopen("sitornot_positions.txt", "r");
+				ft = fopen("/home/ravitejas3/Documents/robotics/FinalProjectCode/myDMPImpl/dmp_positions.txt", "r");
 
-
-
+				while ((read = getline(&line, &len, ft)) != -1) {
+					//printf("%s\n", line );
+					i = 0;
+					ch  = strtok(line, " ");
+					while (ch != NULL ) {
+						i = i + 1;
+						spos  = atoi(ch);
+						ch = strtok(NULL, " ");
+						dynamixel.setSpeed(&serialPort, i, 100);
+						if (spos > -1)
+							dynamixel.setPosition(&serialPort, i, spos);
+					}
+				}
+				fclose(ft);
+				break;
+			case 10: //read initial state values from all motors
+				printf("In case 10\n");
+				ft = fopen("initial_position.txt", "w");
+				for (i = 1; i <= 18; i++) {
+					pos = dynamixel.getPosition(&serialPort, i);
+					fprintf(ft, "%d ", pos);
+				}
+				fclose(ft);
+				break;
+			case 11: // Quit
+				printf("\n THANK U");
+				quitOption = 1;
+				break;
 			}
 		} while (quitOption == 0);
 		serialPort.disconnect();
