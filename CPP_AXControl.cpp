@@ -88,6 +88,7 @@ int main() {
 	int sr_cur_speed = 0;
 	int mr_cur_speed = 0;
 	float speed_scaling_factor = 1.0f;
+	int num_line=0;
 
 	//setting initial values
 
@@ -333,7 +334,7 @@ int main() {
 					fprintf(f, "\n");
 					fprintf(ft, "\n");
 					Utils::sleepMS(50);
-				} while (time(NULL) < s + 60);
+				} while (time(NULL) < s + 10);
 
 				fclose(f);
 				fclose(ft);
@@ -342,10 +343,10 @@ int main() {
 			case 7:
 				f = fopen("movement.txt", "r");
 
-				i=0;
-				for(i=1;i<19;i++){
+				i = 0;
+				for (i = 1; i < 19; i++) {
 					dynamixel.setSpeed(&serialPort, i, 150);
-				}	
+				}
 				while ((read = getline(&line, &len, f)) != -1) {
 					//printf("%s\n", line );
 					i = 0;
@@ -363,10 +364,10 @@ int main() {
 						printf("%d, %d    %f \n", spos, currSpeed, stime );
 						//if (sprevtime != 0.0f) {
 						//	deltaT = stime - sprevtime ;
-					    //		deltaD  = spos - sprevpos;
+						//		deltaD  = spos - sprevpos;
 						//}
 						// if (currSpeed > 0)
-						
+
 						if (spos > -1)
 							dynamixel.setPosition(&serialPort, i, spos);
 						//if (sprevtime == 0.0) {
@@ -376,13 +377,13 @@ int main() {
 						//sprevpos = spos;
 						//ch = strtok(NULL, " ");
 					}
-					//Utils::sleepMS((int)stime/2 );
-				} 
+					Utils::sleepMS(50 );
+				}
 				fclose(f);
 
 				break;
 			case 8:
-				f = fopen("dmp_final.txt", "r");
+				f = fopen("movement.txt", "r");
 				while ((read = getline(&line, &len, f)) != -1) {
 					//printf("%s\n", line );
 					//read2 = getline(&line2, &len2, ft);
@@ -404,31 +405,35 @@ int main() {
 
 
 						printf("%d, %d    %f \n", spos, currSpeed, stime );
-						if (sprevtime != 0.0f) {
-							deltaT = stime - sprevtime ;
-							deltaD  = spos - sprevpos;
-						}
+						// if (sprevtime != 0.0f) {
+						// 	deltaT = stime - sprevtime ;
+						// 	deltaD  = spos - sprevpos;
+						// }
 						if (currSpeed > 0)
-						 	dynamixel.setSpeed(&serialPort, i, currSpeed);
+							dynamixel.setSpeed(&serialPort, i, currSpeed);
 						if (spos > -1)
-						 	dynamixel.setPosition(&serialPort, i, spos);
-						if (sprevtime == 0.0) {
-							Utils::sleepMS(3000);
-						}
-						sprevtime = stime;
-						sprevpos = spos;
+							dynamixel.setPosition(&serialPort, i, spos);
+						// if (sprevtime == 0.0) {
+						// 	Utils::sleepMS(3000);
+						// }
+						// sprevtime = stime;
+						// sprevpos = spos;
 						//ch = strtok(NULL, " ");
 					}
-					Utils::sleepMS((int)deltaT + 50);
+					Utils::sleepMS((int)stime);
 				}
 				fclose(f);
 				fclose(ft);
 
 				break;
 			case 9: //write only positions to robot
-				//ft = fopen("sitornot_positions.txt", "r");
-				ft = fopen("/home/ravitejas3/Documents/robotics/FinalProjectCode/myDMPImpl/dmp_positions.txt", "r");
+				ft = fopen("positions.txt", "r");
+				num_line=0;
+				//ft = fopen("/home/ravitejas3/Documents/robotics/FinalProjectCode/myDMPImpl/dmp_positions.txt", "r");
 
+				for (i = 1; i < 19; i++) {
+					dynamixel.setSpeed(&serialPort, i, 150);
+				}
 				while ((read = getline(&line, &len, ft)) != -1) {
 					//printf("%s\n", line );
 					i = 0;
@@ -437,14 +442,48 @@ int main() {
 						i = i + 1;
 						spos  = atoi(ch);
 						ch = strtok(NULL, " ");
-						dynamixel.setSpeed(&serialPort, i, 100);
+						//dynamixel.setSpeed(&serialPort, i, 100);
 						if (spos > -1)
 							dynamixel.setPosition(&serialPort, i, spos);
+					}
+					if(num_line==0){
+						Utils::sleepMS(3000);
+						num_line=1;
+
 					}
 				}
 				fclose(ft);
 				break;
-			case 10: //read initial state values from all motors
+			case 10: //write only positions to robot
+				ft = fopen("dmp_final.txt", "r");
+				num_line=0;
+				//ft = fopen("/home/ravitejas3/Documents/robotics/FinalProjectCode/myDMPImpl/dmp_positions.txt", "r");
+
+				for (i = 1; i < 19; i++) {
+					dynamixel.setSpeed(&serialPort, i, 150);
+				}
+				while ((read = getline(&line, &len, ft)) != -1) {
+					//printf("%s\n", line );
+					i = 0;
+					ch  = strtok(line, " ");
+					while (ch != NULL ) {
+						i = i + 1;
+						spos  = atoi(ch);
+						ch = strtok(NULL, " ");
+						//dynamixel.setSpeed(&serialPort, i, 100);
+						if (spos > -1)
+							dynamixel.setPosition(&serialPort, i, spos);
+					}
+					//Utils::sleepMS(1);
+					if(num_line==0){
+						Utils::sleepMS(3000);
+						num_line=1;
+
+					}
+				}
+				fclose(ft);
+				break;
+			case 11: //read initial state values from all motors
 				printf("In case 10\n");
 				ft = fopen("initial_position.txt", "w");
 				for (i = 1; i <= 18; i++) {
@@ -453,7 +492,7 @@ int main() {
 				}
 				fclose(ft);
 				break;
-			case 11: // Quit
+			case 12: // Quit
 				printf("\n THANK U");
 				quitOption = 1;
 				break;
