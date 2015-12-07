@@ -5,8 +5,8 @@ with open("sitornot.txt", "r") as p:
     newfile = open("dmp_sitornot.txt", "w")
     print("hi")
     for sline, pline in zip(slines, plines):
-        swords = sline.split(' ')
-        pwords = pline.split(' ')
+        swords = sline.strip().split(' ')
+        pwords = pline.strip().split(' ')
         for i in range(18):
             newfile.write(pwords[i]+' '+swords[i*3+1]+' '+swords[i*3+2]+' ')
         newfile.write('\n')
