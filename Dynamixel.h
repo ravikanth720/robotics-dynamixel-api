@@ -23,7 +23,7 @@ typedef unsigned char byte;
 class Dynamixel {
 
 	private:
-		static const int waitTimeForResponse=10;
+		static const int waitTimeForResponse=5;
 		static const int BufferSize=1024;
 
 		byte buffer[BufferSize];
@@ -39,6 +39,7 @@ class Dynamixel {
 
 
 		int getSetAX12SpeedCommand(byte id, short goal);
+		int getReadAX12SpeedCommand(byte id);
 		int getReadAX12CurrentSpeedCommand(byte id);
 
 		int getSetAX12TorqueCommand(byte id, short goal);
@@ -63,6 +64,7 @@ class Dynamixel {
 		int setTorque(SerialPort *serialPort, int idAX12, int position);
 
 		int getCurrentSpeed(SerialPort *serialPort, int idAX12);
+		int getSpeed(SerialPort *serialPort, int idAX12);
 		int setSpeed(SerialPort *serialPort, int idAX12, int position);
 
 
