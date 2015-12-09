@@ -48,5 +48,6 @@
       7. setTorque( \*serialPort, MotorID, Position)
         Takes the serialport, Motor ID (integer between 1 and 18) and Position (integer between 0 and 1023) as input
         returns a Position value (integer between 0 and 1023)
+
 ### 3. License information
    This software is open source.
